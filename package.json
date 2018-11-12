@@ -1,0 +1,25 @@
+{
+  "name": "karma-puppeteer-launcher",
+  "version": "1.0.1",
+  "description": "A Karma plugin. Launcher for Puppeteer Chrome.",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/rsamec/karma-puppeteer-launcher.git"
+  },
+  "keywords": [
+    "karma-plugin",
+    "karma-launcher",
+    "puppeteer",
+    "chrome"
+  ],
+  "author": "Roman Samec <roman.samec2@gmail.com>",
+  "dependencies": {
+    "fs-access": "^1.0.0",
+    "which": "^1.2.1",
+    "puppeteer-core": "^1.10.0"
+  },
+  "license": "MIT",
+  "devDependencies": {    
+  }
+}
