@@ -69,30 +69,30 @@ var PuppeteerBrowser = function (baseBrowserDecorator, args) {
   var flags = args.flags || []
 
 
-
+  var browser;
   this._start = async (url) => {
 
     console.log(url);
     await ensureExists(path.resolve("./", DEFAULT_TARGET_DIR))
     await ensureExists(path.resolve("./", DEFAULT_TARGET_DIR, DEFAULT_SCREENSHOT_DIR))
-
-
-    const browser = await puppeteer.launch({
+    
+    browser = await puppeteer.launch({
+      headless: flags.indexOf("--headless")!=-1 ,
       args: flags,
       executablePath: DEFAULT_CMD[process.platform]
     });
     const page = await browser.newPage();
 
     // Capture logging
-    page.on('console', (...args) => console.log.apply(console, ['[Browser]', ...args]));
+    //page.on('console', (...args) => console.log.apply(console, ['[Browser]', ...args]));
 
 
     // Expose Screenshot function
-    await page.exposeFunction('capturePage', name => {
+    await page.exposeFunction('capturePage', (name, clip) => {
 
       const filename = path.resolve("./", DEFAULT_TARGET_DIR, DEFAULT_SCREENSHOT_DIR, `${name}.png`);
       console.log('[Node]', 'Save 🎨  to', filename);
-      return page.screenshot({ path: filename, fullPage: true });
+      return page.screenshot(clip !== undefined ? { path: filename, clip: clip } : { path: filename, fullPage: true });
     });
 
     await page.exposeFunction('puppeteerDone', async code => {
@@ -100,9 +100,43 @@ var PuppeteerBrowser = function (baseBrowserDecorator, args) {
       process.exit(code);
     });
 
+
+    await page.exposeFunction('captureDOMElement', async (fileName, element, padding = 0) => {
+      console.log(element);
+      const { x, y, width, height } = element.getBoundingClientRect();
+      let rect = { left: x, top: y, width, height, id: element.id };
+      console.log(rect);
+      
+      return await page.screenshot({
+        path: fileName,
+        clip: {
+          x: rect.left - padding,
+          y: rect.top - padding,
+          width: rect.width + padding * 2,
+          height: rect.height + padding * 2
+        }
+      });
+    })
+
+    await page.exposeFunction('captureElement', async (fileName, selector) => {
+      const element = await page.$(selector);
+      console.log(selector);
+      await element.screenshot({ path: fileName });
+    })
+
     await page.goto(url);
 
   }
+
+  this.on('kill', async (done) => {
+    if (browser != null) {
+      console.log("Closing puppeteer browser.");
+      await browser.close();
+    }
+    done();
+  })
+
+
 }
 
 PuppeteerBrowser.prototype = {
