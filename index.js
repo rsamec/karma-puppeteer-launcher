@@ -100,30 +100,16 @@ var PuppeteerBrowser = function (baseBrowserDecorator, args) {
       process.exit(code);
     });
 
-
-    await page.exposeFunction('captureDOMElement', async (fileName, element, padding = 0) => {
-      console.log(element);
-      const { x, y, width, height } = element.getBoundingClientRect();
-      let rect = { left: x, top: y, width, height, id: element.id };
-      console.log(rect);
-      
-      return await page.screenshot({
-        path: fileName,
-        clip: {
-          x: rect.left - padding,
-          y: rect.top - padding,
-          width: rect.width + padding * 2,
-          height: rect.height + padding * 2
-        }
-      });
+    await page.exposeFunction('setViewport', async (options) => {
+      await page.setViewport(options);
     })
-
-    await page.exposeFunction('captureElement', async (fileName, selector) => {
-      const element = await page.$(selector);
-      console.log(selector);
-      await element.screenshot({ path: fileName });
+    await page.exposeFunction('captureElement', async (name, selector) => {
+      const filename = path.resolve("./", DEFAULT_TARGET_DIR, DEFAULT_SCREENSHOT_DIR, `${name}.png`);
+      const frame = await page.frames().find(f => f.name() === 'context');
+      const element = await frame.$(selector);
+      await element.screenshot({ path: filename });
     })
-
+    
     await page.goto(url);
 
   }
